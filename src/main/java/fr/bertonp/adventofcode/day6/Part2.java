@@ -6,6 +6,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -23,38 +24,30 @@ public class Part2 {
 
             List<String> lines = Files.readAllLines(Paths.get(resource.toURI()), StandardCharsets.UTF_8);
 
-            List<Integer> lanternfishList = Arrays.stream(
-                    lines.get(0).split(Pattern.quote(","))
-            ).filter(s -> !s.isEmpty()).map(Integer::valueOf).collect(Collectors.toList());
-
-            Lanternfish last = null;
-            for (int lanternfish: lanternfishList) {
-                last = new Lanternfish(lanternfish, last);
+            List<BigInteger> listeEtats = new ArrayList<>();
+            for (int i = 0; i < 9; i++) {
+                listeEtats.add(BigInteger.ZERO);
             }
+
+            Arrays.stream(lines.get(0).split(Pattern.quote(",")))
+                    .filter(s -> !s.isEmpty())
+                    .map(Integer::valueOf)
+                    .forEach(i -> listeEtats.set(i, listeEtats.get(i).add(BigInteger.ONE)));
 
             for (int i = 0; i < 256; i++) {
-                Lanternfish current = last;
-                BigInteger nbToAddAfter = BigInteger.valueOf(0L);
-                while (current != null) {
-                    if (current.getTimer() == 0) {
-                        current.setTimer(6);
-                        nbToAddAfter = nbToAddAfter.add(BigInteger.ONE);
-                    } else {
-                        current.setTimer(current.getTimer() - 1);
-                    }
-                    current = current.getNext();
+                List<BigInteger> listeEtatsTmp = new ArrayList<>(listeEtats);
+                for (int j = 1; j < listeEtats.size(); j++) {
+                    listeEtatsTmp.set(j - 1, listeEtats.get(j));
                 }
-                while (!nbToAddAfter.equals(BigInteger.ZERO)) {
-                    last = new Lanternfish(8, last);
-                    nbToAddAfter = nbToAddAfter.subtract(BigInteger.ONE);
-                }
+                listeEtatsTmp.set(6, listeEtats.get(0).add(listeEtatsTmp.get(6)));
+                listeEtatsTmp.set(8, listeEtats.get(0));
+                listeEtats.clear();
+                listeEtats.addAll(listeEtatsTmp);
             }
 
-            BigInteger sum = BigInteger.valueOf(1L);
-            Lanternfish current = last;
-            while (current.getNext() != null) {
-                sum = sum.add(BigInteger.ONE);
-                current = current.getNext();
+            BigInteger sum = BigInteger.ZERO;
+            for (BigInteger listeEtat : listeEtats) {
+                sum = sum.add(listeEtat);
             }
 
             System.out.println("Result : " + sum);
